@@ -1,6 +1,7 @@
 const resService = require('./../service/ResponseService');
 const booksModel = require('./../database/models/Books');
 const db = require('./../database/db_connection');
+const redisService = require('../service/RedisService');
 
 const dbConn = db.dbConn;
 const QueryTypes = db.QueryTypes;
@@ -32,14 +33,22 @@ const BooksController = {
         );
     },
 
-    fetchAllBooks: function(res){
-        booksModel.findAll({
-            attributes: ['id','book_name','author','published_year']
-        }).then(
-            books => resService.successResponse(res, {books: books})
-        ).catch(
-            err => resService.errResponse(res, 'Something Went Wrong')
-        )
+    fetchAllBooks: async function(res){
+        let booksDataFromRedis = await redisService.fetchByKey('all');
+        if(booksDataFromRedis){
+            resService.successResponse(res, {books: JSON.parse(booksDataFromRedis)});
+        }else{
+            booksModel.findAll({
+                attributes: ['id','book_name','author','published_year']
+            }).then(
+                books => {
+                    redisService.setByKey('all',JSON.stringify(books));
+                    resService.successResponse(res, {books: books});
+                }
+            ).catch(
+                err => resService.errResponse(res, 'Something Went Wrong')
+            )
+        }
     },
 
     deleteBookById: function(bookId, res){
