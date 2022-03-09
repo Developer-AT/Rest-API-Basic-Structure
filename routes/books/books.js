@@ -4,9 +4,9 @@ const BooksValidator = require('./../../middleware/validator/booksValidator');
 
 const bookRoutes = express.Router();
 
-bookRoutes.get('/all', function(req,res){
-    BooksController.fetchAllBooks(res);
-})
+bookRoutes.get('/all',
+    (req,res) => BooksController.fetchAllBooks(res)
+)
 
 bookRoutes.post('/add',function(req,res,next){
     BooksValidator.validateIncomingData(req,res,next)
